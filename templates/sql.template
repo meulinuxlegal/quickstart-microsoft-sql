@@ -21,8 +21,6 @@ Metadata:
           default: Amazon EC2 configuration
         Parameters:
           - KeyPairName
-          - HostType
-          - DedicatedHostAMI
       - Label:
           default: Active Directory configuration
         Parameters:
@@ -32,6 +30,8 @@ Metadata:
           - DomainAdminUser
           - DomainAdminPassword
           - DomainMemberSGID
+          - ADServer1PrivateIP
+          - ADServer2PrivateIP
       - Label:
           default: SQL Server configuration
         Parameters:
@@ -56,6 +56,7 @@ Metadata:
           default: Failover cluster configuration
         Parameters:
           - ClusterName
+          - WitnessType
           - WSFCFileServerInstanceType
           - WSFCFileServerNetBIOSName
           - WSFCFileServerPrivateIP
@@ -64,19 +65,16 @@ Metadata:
           - WSFCNode1PrivateIP1
           - WSFCNode1PrivateIP2
           - WSFCNode1PrivateIP3
-          - DedicatedHostIDNode1
           - WSFCNode2InstanceType
           - WSFCNode2NetBIOSName
           - WSFCNode2PrivateIP1
           - WSFCNode2PrivateIP2
           - WSFCNode2PrivateIP3
-          - DedicatedHostIDNode2
           - WSFCNode3InstanceType
           - WSFCNode3NetBIOSName
           - WSFCNode3PrivateIP1
           - WSFCNode3PrivateIP2
           - WSFCNode3PrivateIP3
-          - DedicatedHostIDNode3
       - Label:
           default: AWS Systems Manager AMI configuration
         Parameters:
@@ -93,18 +91,16 @@ Metadata:
     ParameterLabels:
       ADScenarioType:
         default: AD scenario type
+      ADServer1PrivateIP:
+        default: Domain controller 1 IP address
+      ADServer2PrivateIP:
+        default: Domain controller 2 IP address
       AvailabiltyGroupName:
         default: Availability group name
       ClusterName:
         default: Cluster NetBIOS name
-      DedicatedHostAMI:
-        default: BYOL AMI to use on dedicated host
-      DedicatedHostIDNode1:
-        default: Dedicated host ID for node 1 (requires tenancy set to "dedicated host")
-      DedicatedHostIDNode2:
-        default: Dedicated host ID for node 2 (requires tenancy set to "dedicated host")
-      DedicatedHostIDNode3:
-        default: Dedicated host ID for node 3 (requires tenancy set to "dedicated host")
+      WitnessType:
+        default: File share witness type
       DomainAdminPassword:
         default: Domain admin password
       DomainAdminUser:
@@ -115,8 +111,6 @@ Metadata:
         default: Security group ID for AD domain members
       DomainNetBIOSName:
         default: Domain NetBIOS name
-      HostType:
-        default: Tenancy
       KeyPairName:
         default: Key pair name
       PrivateSubnet1ID:
@@ -220,6 +214,16 @@ Parameters:
     Description: 'Select the type of AD DS deployment to use: AWS Directory Service
       for Microsoft AD or managing your own Amazon EC2 AD instances.'
     Type: String
+  ADServer1PrivateIP:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    Default: 10.0.0.10
+    Description: The IP address of the first Domain Controller. For AWS Managed AD, use the first DNS address.
+    Type: String
+  ADServer2PrivateIP:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    Default: 10.0.32.10
+    Description: The IP address of the first Domain Controller. For AWS Managed AD, use the second DNS address.
+    Type: String
   ClusterName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
     Default: "WSFCCluster1"
@@ -234,24 +238,6 @@ Parameters:
     MaxLength: '15'
     MinLength: '1'
     Type: "String"
-  DedicatedHostAMI:
-    Default: ''
-    Description: If host type is set to "Dedicated" or "Dedicated Host", you need
-      to specify your imported BYOL AMI ID.
-    Type: String
-  DedicatedHostIDNode1:
-    Default: ''
-    Description: Dedicated host ID for node 1, used only if host type is set to "host".
-    Type: String
-  DedicatedHostIDNode2:
-    Default: ''
-    Description: Dedicated host ID for node 2, used only if host type is set to "host".
-    Type: String
-  DedicatedHostIDNode3:
-    Default: ''
-    Description: Dedicated host ID for the optional node 3, used only if host type is
-      set to "host".
-    Type: String
   DomainAdminPassword:
     AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
     Description: Password for the domain admin user. Must be at least 8 characters,
@@ -284,15 +270,6 @@ Parameters:
       versions of Windows.
     MaxLength: '15'
     MinLength: '1'
-    Type: String
-  HostType:
-    AllowedValues:
-      - Shared
-      - Dedicated
-      - Dedicated Host
-    Default: Shared
-    Description: 'Host type. For dedicated types, you must already have suitable
-      dedicated hosts in your account.'
     Type: String
   KeyPairName:
     Description: Public/private key pair, which allows you to securely connect to your instance
@@ -444,6 +421,13 @@ Parameters:
   VPCID:
     Description: ID of the VPC (e.g., vpc-0343606e).
     Type: AWS::EC2::VPC::Id
+  WitnessType:
+    AllowedValues:
+      - FSx
+      - Windows file share
+    Default: Windows file share
+    Description: Type of file share to use for failover cluster witness.
+    Type: String
   WSFCFileServerInstanceType:
     AllowedValues:
       - t2.small
@@ -626,16 +610,6 @@ Conditions:
   Vol3IsIo1: !Equals
     - !Ref 'Volume2Type'
     - io1
-  HostTypeIsDefault: !Equals
-    - !Ref 'HostType'
-    - Shared
-  HostTypeIsDediHost: !Equals
-    - !Ref 'HostType'
-    - Dedicated Host
-  ByolAmi: !Not
-    - !Equals
-      - !Ref 'HostType'
-      - Shared
   SQLBakedInAMI: !Equals
     - !Ref 'SQLLicenseProvided'
     - 'yes'
@@ -648,6 +622,9 @@ Conditions:
   GovCloudCondition: !Equals
     - !Ref 'AWS::Region'
     - us-gov-west-1
+  FSxWitness: !Equals
+    - !Ref 'WitnessType'
+    - 'FSx'
 Rules:
   SubnetsInVPC:
     Assertions:
@@ -744,7 +721,7 @@ Resources:
             description: "License SQL Server from AWS Marketplace"
             type: "String"
           SQL2016Media:
-            description: "SQL Server 2017 installation media location"
+            description: "SQL Server 2016 installation media location"
             type: "String"
           SQL2017Media:
             description: "SQL Server 2017 installation media location"
@@ -778,6 +755,10 @@ Resources:
           WSFCNode2PrivateIP3:
             default: "10.0.32.102"
             description: "Third private IP for Availability Group Listener on first WSFC Node"
+            type: "String"
+          FSXFileSystemID:
+            default: ""
+            description: "ID of the FSX File System to be used as a cluster witness"
             type: "String"
           WSFCNode3NetBIOSName:
             default: "WSFCNode3"
@@ -841,6 +822,10 @@ Resources:
             default: ""
             description: "(Optional) The ARN of the role that allows Automation to perform the actions on your behalf."
             type: "String"
+          WitnessType:
+            default: "Windoes file share"
+            description: "Failover cluster witness type"
+            type: "String"
         mainSteps:
         - name: "wsfcNode1InstanceId"
           action: aws:executeAwsApi
@@ -885,7 +870,7 @@ Resources:
                 StringEquals: "no"
               - Variable: "{{ThirdAZ}}"
                 StringEquals: "witness"
-              NextStep: wsfcFileServerInstanceId
+              NextStep: FSxBranch
             - Variable: "{{ThirdAZ}}"
               StringEquals: "full"
               NextStep: wsfcNode3InstanceId
@@ -1096,6 +1081,16 @@ Resources:
                    Start-DscConfiguration 'C:\AWSQuickstart\WSFCNode1Config' -Wait -Verbose -Force
         
                    DscStatusCheck
+        - name: FSxBranch
+          action: aws:branch
+          inputs:
+            Choices:
+            - Variable: "{{WitnessType}}"
+              StringEquals: "Windows file share"
+              NextStep: wsfcFileServerInstanceId
+            - Variable: "{{WitnessType}}"
+              StringEquals: "FSx"
+              NextStep: wsfcfInstanceIds
         - name: "wsfcFileServerInstanceId"
           action: aws:executeAwsApi
           onFailure: "step:signalfailure"
@@ -1279,7 +1274,7 @@ Resources:
         - name: "Node1wMof"
           action: "aws:runCommand"
           onFailure: "step:signalfailure"
-          #nextStep: 
+          nextStep: Node1wConfig
           inputs:
             DocumentName: "AWS-RunRemoteScript"
             InstanceIds:
@@ -1301,6 +1296,169 @@ Resources:
                       - !Ref AWS::Region
                       - !Ref QSS3BucketRegion
               commandLine: "./Node1Config.ps1 -DomainNetBIOSName {{DomainNetBIOSName}} -DomainDNSName {{DomainDNSName}} -WSFCNode1PrivateIP2 {{WSFCNode1PrivateIP2}} -ClusterName {{ClusterName}} -AdminSecret {{AdminSecrets}} -SQLSecret {{SQLSecrets}} -FileServerNetBIOSName {{WSFCFileServerNetBIOSName}}"
+        - name: "wsfcfInstanceIds"
+          action: aws:executeAwsApi
+          onFailure: "step:signalfailure"
+          inputs:
+            Service: ec2
+            Api: DescribeInstances
+            Filters:  
+            - Name: "tag:Name"
+              Values: [ "{{WSFCNode1NetBIOSName}}","{{WSFCNode2NetBIOSName}}"]
+            - Name: "tag:aws:cloudformation:stack-name"
+              Values: ["{{StackName}}"]
+            - Name: "instance-state-name"
+              Values: [ "running" ]
+          outputs:
+          - Name: InstanceIds
+            Selector: "$.Reservations..Instances..InstanceId"
+            Type: "StringList"
+        - name: "wsfcfInstallDscModules"
+          action: "aws:runCommand"
+          onFailure: "step:signalfailure"
+          inputs:
+            DocumentName: "AWS-RunRemoteScript"
+            InstanceIds:
+            - "{{wsfcfInstanceIds.InstanceIds}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              sourceType: "S3"
+              sourceInfo: 
+                !Sub 
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/install-sql-modules.ps1"}'
+                  - S3Bucket: !If 
+                      - UsingDefaultBucket
+                      - !Sub '${QSS3BucketName}-${AWS::Region}'
+                      - !Ref QSS3BucketName
+                    S3Region: !If 
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+              commandLine: "./install-sql-modules.ps1"
+        - name: "wsfcnodefInitializeDisk"
+          action: "aws:runCommand"
+          onFailure: "step:signalfailure"
+          inputs:
+            DocumentName: AWS-RunRemoteScript
+            InstanceIds: 
+            - "{{wsfcfInstanceIds.InstanceIds}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+            Parameters:
+              sourceType: "S3"
+              sourceInfo: 
+                !Sub 
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/Initialize-GPT.ps1"}'
+                  - S3Bucket: !If 
+                      - UsingDefaultBucket
+                      - !Sub '${QSS3BucketName}-${AWS::Region}'
+                      - !Ref QSS3BucketName
+                    S3Region: !If 
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+              commandLine: "./Initialize-GPT.ps1"
+        - name: "wsfcfLCMConfig"
+          action: "aws:runCommand"
+          onFailure: "step:signalfailure"
+          inputs:
+            DocumentName: "AWS-RunRemoteScript"
+            InstanceIds:
+            - "{{wsfcfInstanceIds.InstanceIds}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              sourceType: "S3"
+              sourceInfo: 
+                !Sub 
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/LCM-Config.ps1"}'
+                  - S3Bucket: !If 
+                      - UsingDefaultBucket
+                      - !Sub '${QSS3BucketName}-${AWS::Region}'
+                      - !Ref QSS3BucketName
+                    S3Region: !If 
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+              commandLine: "./LCM-Config.ps1"
+        - name: "wsfcfDomainJoin"
+          action: "aws:runCommand"
+          onFailure: "step:signalfailure"
+          inputs:
+            DocumentName: "AWS-RunRemoteScript"
+            InstanceIds:
+            - "{{wsfcfInstanceIds.InstanceIds}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              sourceType: "S3"
+              sourceInfo: 
+                !Sub 
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/DomainJoin.ps1"}'
+                  - S3Bucket: !If 
+                      - UsingDefaultBucket
+                      - !Sub '${QSS3BucketName}-${AWS::Region}'
+                      - !Ref QSS3BucketName
+                    S3Region: !If 
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+              commandLine: "./DomainJoin.ps1 -DomainNetBIOSName {{DomainNetBIOSName}} -DomainDNSName {{DomainDNSName}} -AdminSecret {{AdminSecrets}}"
+        - name: "wsfcfDomainConfig"
+          action: aws:runCommand
+          onFailure: "step:signalfailure"
+          inputs:
+            DocumentName: AWS-RunPowerShellScript
+            InstanceIds: 
+            - "{{wsfcfInstanceIds.InstanceIds}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              commands: 
+                - |     
+                   function DscStatusCheck () {
+                       $LCMState = (Get-DscLocalConfigurationManager).LCMState
+                       if ($LCMState -eq 'PendingConfiguration' -Or $LCMState -eq 'PendingReboot') {
+                           'returning 3010, should continue after reboot'
+                           exit 3010
+                       } else {
+                         'Completed'
+                       }
+                   }
+                   
+                   Start-DscConfiguration 'C:\AWSQuickstart\DomainJoin' -Wait -Verbose -Force
+        
+                   DscStatusCheck
+        - name: "Node1fMof"
+          action: "aws:runCommand"
+          onFailure: "step:signalfailure"
+          nextStep: Node1wConfig
+          inputs:
+            DocumentName: "AWS-RunRemoteScript"
+            InstanceIds:
+              - "{{wsfcNode1InstanceId.InstanceId}}"
+            CloudWatchOutputConfig:
+              CloudWatchOutputEnabled: "true"
+              CloudWatchLogGroupName: !Sub '/aws/Quick_Start/${AWS::StackName}'
+            Parameters:
+              sourceType: "S3"
+              sourceInfo: 
+                !Sub 
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/Node1Config.ps1"}'
+                  - S3Bucket: !If 
+                      - UsingDefaultBucket
+                      - !Sub '${QSS3BucketName}-${AWS::Region}'
+                      - !Ref QSS3BucketName
+                    S3Region: !If 
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+              commandLine: "./Node1Config.ps1 -DomainNetBIOSName {{DomainNetBIOSName}} -DomainDNSName {{DomainDNSName}} -WSFCNode1PrivateIP2 {{WSFCNode1PrivateIP2}} -ClusterName {{ClusterName}} -AdminSecret {{AdminSecrets}} -SQLSecret {{SQLSecrets}} -FSXFileSystemID {{FSXFileSystemID}}"
         - name: "Node1wConfig"
           action: aws:runCommand
           onFailure: "step:signalfailure"
@@ -2165,6 +2323,13 @@ Resources:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
+                Action: fsx:*
+                Resource: '*'
+          PolicyName: QS-MSSQL-FSX
+        - PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
                 Action:
                   - iam:PassRole
                 Resource: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${AWSQuickstartMSSQLRole}'
@@ -2223,37 +2388,16 @@ Resources:
   WSFCNode1:
     Type: AWS::EC2::Instance
     Properties:
-      Affinity: !If
-        - HostTypeIsDediHost
-        - host
-        - !If
-          - HostTypeIsDefault
-          - !Ref 'AWS::NoValue'
-          - default
-      HostId: !If
-        - HostTypeIsDediHost
-        - !Ref 'DedicatedHostIDNode1'
-        - !Ref 'AWS::NoValue'
-      Tenancy: !If
-        - HostTypeIsDediHost
-        - host
-        - !If
-          - HostTypeIsDefault
-          - default
-          - dedicated
       ImageId: !If
-        - ByolAmi
-        - !Ref 'DedicatedHostAMI'
+        - SQLBakedInAMI
         - !If
-            - SQLBakedInAMI
+            - 'SQLVersion2016'
+            - !Ref WS2019FULLSQL2016ENT
             - !If
-                - 'SQLVersion2016'
-                - !Ref WS2019FULLSQL2016ENT
-                - !If
-                  - 'SQLVersion2017'
-                  - !Ref WS2019FULLSQL2017ENT
-                  - !Ref WS2019FULLSQL2019ENT
-            - !Ref WS2019FULLBASE
+              - 'SQLVersion2017'
+              - !Ref WS2019FULLSQL2017ENT
+              - !Ref WS2019FULLSQL2019ENT
+        - !Ref WS2019FULLBASE
       IamInstanceProfile: !Ref 'WSFCProfile'
       InstanceType: !Ref 'WSFCNode1InstanceType'
       EbsOptimized: true
@@ -2287,37 +2431,16 @@ Resources:
     Type: AWS::EC2::Instance
     Condition: ThirdAzIsFullNode
     Properties:
-      Affinity: !If
-        - HostTypeIsDediHost
-        - host
-        - !If
-          - HostTypeIsDefault
-          - !Ref 'AWS::NoValue'
-          - default
-      HostId: !If
-        - HostTypeIsDediHost
-        - !Ref 'DedicatedHostIDNode3'
-        - !Ref 'AWS::NoValue'
-      Tenancy: !If
-        - HostTypeIsDediHost
-        - host
-        - !If
-          - HostTypeIsDefault
-          - default
-          - dedicated
       ImageId: !If
-        - ByolAmi
-        - !Ref 'DedicatedHostAMI'
+        - SQLBakedInAMI
         - !If
-            - SQLBakedInAMI
+            - 'SQLVersion2016'
+            - !Ref WS2019FULLSQL2016ENT
             - !If
-                - 'SQLVersion2016'
-                - !Ref WS2019FULLSQL2016ENT
-                - !If
-                  - 'SQLVersion2017'
-                  - !Ref WS2019FULLSQL2017ENT
-                  - !Ref WS2019FULLSQL2019ENT
-            - !Ref WS2019FULLBASE
+              - 'SQLVersion2017'
+              - !Ref WS2019FULLSQL2017ENT
+              - !Ref WS2019FULLSQL2019ENT
+        - !Ref WS2019FULLBASE
       IamInstanceProfile: !Ref 'WSFCProfile'
       InstanceType: !Ref 'WSFCNode3InstanceType'
       EbsOptimized: true
@@ -2350,37 +2473,16 @@ Resources:
   WSFCNode2:
     Type: AWS::EC2::Instance
     Properties:
-      Affinity: !If
-        - HostTypeIsDediHost
-        - host
-        - !If
-          - HostTypeIsDefault
-          - !Ref 'AWS::NoValue'
-          - default
-      HostId: !If
-        - HostTypeIsDediHost
-        - !Ref 'DedicatedHostIDNode2'
-        - !Ref 'AWS::NoValue'
-      Tenancy: !If
-        - HostTypeIsDediHost
-        - host
-        - !If
-          - HostTypeIsDefault
-          - default
-          - dedicated
       ImageId: !If
-        - ByolAmi
-        - !Ref 'DedicatedHostAMI'
+        - SQLBakedInAMI
         - !If
-            - SQLBakedInAMI
+            - 'SQLVersion2016'
+            - !Ref WS2019FULLSQL2016ENT
             - !If
-                - 'SQLVersion2016'
-                - !Ref WS2019FULLSQL2016ENT
-                - !If
-                  - 'SQLVersion2017'
-                  - !Ref WS2019FULLSQL2017ENT
-                  - !Ref WS2019FULLSQL2019ENT
-            - !Ref WS2019FULLBASE
+              - 'SQLVersion2017'
+              - !Ref WS2019FULLSQL2017ENT
+              - !Ref WS2019FULLSQL2019ENT
+        - !Ref WS2019FULLBASE
       IamInstanceProfile: !Ref 'WSFCProfile'
       InstanceType: !Ref 'WSFCNode2InstanceType'
       EbsOptimized: true
@@ -2440,6 +2542,11 @@ Resources:
             - !Sub '"${WSFCNode3PrivateIP3}"'
             - ';"WSFCFileServerNetBIOSName"='
             - !Sub '"${WSFCFileServerNetBIOSName}"'
+            - ';"FSXFileSystemID"='
+            - !If
+                - FSxWitness
+                - !Sub '"${FSXFileSystem}"'
+                - '"none"'
             - ';"ClusterName"='
             - !Sub '"${ClusterName}"'
             - ';"AvailabiltyGroupName"='
@@ -2471,6 +2578,8 @@ Resources:
             - !Sub '"${SQL2019Media}"'
             - ';"StackName"='
             - !Sub '"${AWS::StackName}"'
+            - ';"WitnessType"='
+            - !Sub '"${WitnessType}"'
             - ';"URLSuffix"='
             - !Sub '"${AWS::URLSuffix}"'
             - ';"AutomationAssumeRole"='
@@ -2766,6 +2875,96 @@ Resources:
           FromPort: 1433
           ToPort: 1433
           SourceSecurityGroupId: !Ref 'SQLServerAccessSecurityGroup'
+  FSxSG:
+    Type: AWS::EC2::SecurityGroup
+    Condition: FSxWitness
+    Properties: 
+      GroupDescription: FSx share
+      VpcId: !Ref VPCID
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5985
+          ToPort: 5985
+          SourceSecurityGroupId: !Ref DomainMemberSGID
+        - IpProtocol: tcp
+          FromPort: 53
+          ToPort: 53
+          SourceSecurityGroupId: !Ref DomainMemberSGID
+        - IpProtocol: tcp
+          FromPort: 53
+          ToPort: 53
+          SourceSecurityGroupId: !Ref DomainMemberSGID
+        - IpProtocol: udp
+          FromPort: 53
+          ToPort: 53
+          SourceSecurityGroupId: !Ref DomainMemberSGID
+        - IpProtocol: tcp
+          FromPort: 49152
+          ToPort: 65535
+          SourceSecurityGroupId: !Ref DomainMemberSGID
+        - IpProtocol: udp
+          FromPort: 49152
+          ToPort: 65535
+          SourceSecurityGroupId: !Ref DomainMemberSGID
+        - IpProtocol: tcp
+          FromPort: 88
+          ToPort: 88
+          SourceSecurityGroupId: !Ref DomainMemberSGID
+        - IpProtocol: udp
+          FromPort: 88
+          ToPort: 88
+          SourceSecurityGroupId: !Ref DomainMemberSGID
+        - IpProtocol: tcp
+          FromPort: 445
+          ToPort: 445
+          SourceSecurityGroupId: !Ref DomainMemberSGID
+        - IpProtocol: udp
+          FromPort: 445
+          ToPort: 445
+          SourceSecurityGroupId: !Ref DomainMemberSGID
+        - IpProtocol: tcp
+          FromPort: 389
+          ToPort: 389
+          SourceSecurityGroupId: !Ref DomainMemberSGID
+        - IpProtocol: udp
+          FromPort: 389
+          ToPort: 389
+          SourceSecurityGroupId: !Ref DomainMemberSGID
+        - IpProtocol: tcp
+          FromPort: 636
+          ToPort: 636
+          SourceSecurityGroupId: !Ref DomainMemberSGID
+  FSXFileSystem:
+    Type: 'AWS::FSx::FileSystem'
+    DependsOn: FSxSG
+    Condition: FSxWitness
+    Properties:
+      FileSystemType: WINDOWS
+      StorageCapacity: 32
+      StorageType: SSD
+      SubnetIds:
+        - !Ref PrivateSubnet1ID
+        - !Ref PrivateSubnet2ID
+      SecurityGroupIds:
+        - !Ref FSxSG
+      Tags:
+        - Key: Name
+          Value: windows
+      WindowsConfiguration:
+        ThroughputCapacity: 8
+        WeeklyMaintenanceStartTime: '4:16:30'
+        DailyAutomaticBackupStartTime: '01:00'
+        AutomaticBackupRetentionDays: 30
+        CopyTagsToBackups: false
+        DeploymentType: 'MULTI_AZ_1'
+        PreferredSubnetId: !Ref PrivateSubnet1ID
+        SelfManagedActiveDirectoryConfiguration:
+          DnsIps:
+            - !Ref ADServer1PrivateIP
+            - !Ref ADServer2PrivateIP
+          DomainName: !Ref DomainDNSName
+          UserName: !Ref DomainAdminUser
+          Password: !Ref DomainAdminPassword
 Outputs:
   WSFCNode1NetBIOSName:
     Value: !Ref 'WSFCNode1NetBIOSName'
