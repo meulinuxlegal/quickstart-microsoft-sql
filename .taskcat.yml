@@ -54,12 +54,10 @@ tests:
     - eu-west-1
     s3_bucket: ''
     template: templates/sql-master.template
-  mssql-ds-3rdaz-full:
+  mssql-ds-fsx:
     parameters:
-      ADScenarioType: Microsoft AD on Amazon EC2
-      ADServer1NetBIOSName: SQLDC1
-      ADServer2NetBIOSName: SQLDC2
-      AvailabilityZones: $[taskcat_getaz_3]
+      ADScenarioType: AWS Directory Service for Microsoft AD (Enterprise Edition)
+      AvailabilityZones: $[taskcat_getaz_2]
       DomainAdminPassword: $[taskcat_genpass_16]
       KeyPairName: $[taskcat_getkeypair]
       QSS3BucketName: $[taskcat_autobucket]
@@ -68,7 +66,7 @@ tests:
       SQLServiceAccountPassword: $[taskcat_genpass_16]
       SQL2019Media: https://quickstart-ci-media.s3.amazonaws.com/microsoft/sql/SQLServer2019-x64-ENU.iso
       QSS3BucketRegion: $[taskcat_current_region]
-      ThirdAZ: full
+      WitnessType: FSx
     regions:
     - us-east-1
     s3_bucket: ''

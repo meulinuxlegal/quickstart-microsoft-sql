@@ -67,6 +67,7 @@ Metadata:
           default: Failover cluster configuration
         Parameters:
           - ClusterName
+          - WitnessType
           - WSFCNodeInstanceType
           - WSFCNode1NetBIOSName
           - WSFCNode1PrivateIP1
@@ -172,6 +173,8 @@ Metadata:
         default: SQL Server volume type
       VPCCIDR:
         default: VPC CIDR
+      WitnessType:
+        default: File share witness type
       WSFCFileServerInstanceType:
         default: File server instance type
       WSFCFileServerNetBIOSName:
@@ -499,6 +502,13 @@ Parameters:
     Default: 10.0.0.0/16
     Description: CIDR block for the VPC.
     Type: String
+  WitnessType:
+    AllowedValues:
+      - FSx
+      - Windows file share
+    Default: Windows file share
+    Description: Type of file share to use for failover cluster witness.
+    Type: String
   WSFCFileServerNetBIOSName:
     AllowedPattern: '[a-zA-Z0-9\-]+'
     Default: WSFCFileServer
@@ -780,6 +790,7 @@ Resources:
           - !Ref 'AvailabilityZones'
         WSFCNodeInstanceType: !Ref 'WSFCNodeInstanceType'
   SQLStack:
+    Condition: HostTypeIsDefault
     DependsOn: ADStack
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -796,24 +807,16 @@ Resources:
               - !Ref QSS3BucketName
       Parameters:
         ADScenarioType: !Ref 'ADScenarioType'
+        ADServer1PrivateIP: !If
+          - UseAWSDirectoryServiceEE
+          - !GetAtt 'ADStack.Outputs.ADServer1PrivateIP'
+          - !Ref 'ADServer1PrivateIP'
+        ADServer2PrivateIP: !If
+          - UseAWSDirectoryServiceEE
+          - !GetAtt 'ADStack.Outputs.ADServer2PrivateIP'
+          - !Ref 'ADServer2PrivateIP'
         ClusterName: !Ref 'ClusterName'
         AvailabiltyGroupName: !Ref 'AvailabiltyGroupName'
-        DedicatedHostAMI: !Ref 'DedicatedHostAMI'
-        DedicatedHostIDNode1: !If
-          - CreateDediHosts
-          - !GetAtt 'DediHostStack.Outputs.DedicatedHost1'
-          - !Ref 'AWS::NoValue'
-        DedicatedHostIDNode2: !If
-          - CreateDediHosts
-          - !GetAtt 'DediHostStack.Outputs.DedicatedHost2'
-          - !Ref 'AWS::NoValue'
-        DedicatedHostIDNode3: !If
-          - IsTwoAz
-          - !Ref 'AWS::NoValue'
-          - !If
-            - CreateDediHosts
-            - !GetAtt 'DediHostStack.Outputs.DedicatedHost1'
-            - !Ref 'AWS::NoValue'
         DomainAdminPassword: !Ref 'DomainAdminPassword'
         DomainAdminUser: !If
           - UseAWSDirectoryServiceEE
@@ -822,7 +825,6 @@ Resources:
         DomainDNSName: !Ref 'DomainDNSName'
         DomainMemberSGID: !GetAtt 'ADStack.Outputs.DomainMemberSGID'
         DomainNetBIOSName: !Ref 'DomainNetBIOSName'
-        HostType: !Ref 'HostType'
         KeyPairName: !Ref 'KeyPairName'
         PrivateSubnet1ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet1AID'
         PrivateSubnet2ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet2AID'
@@ -851,6 +853,101 @@ Resources:
         Volume3Iops: !Ref 'VolumeIops'
         Volume3Size: !Ref 'VolumeSize'
         Volume3Type: !Ref 'VolumeType'
+        WitnessType: !Ref 'WitnessType'
+        WSFCFileServerInstanceType: !Ref 'WSFCFileServerInstanceType'
+        WSFCFileServerNetBIOSName: !Ref 'WSFCFileServerNetBIOSName'
+        WSFCFileServerPrivateIP: !Ref 'WSFCFileServerPrivateIP'
+        WSFCNode1InstanceType: !Ref 'WSFCNodeInstanceType'
+        WSFCNode1NetBIOSName: !Ref 'WSFCNode1NetBIOSName'
+        WSFCNode1PrivateIP1: !Ref 'WSFCNode1PrivateIP1'
+        WSFCNode1PrivateIP2: !Ref 'WSFCNode1PrivateIP2'
+        WSFCNode1PrivateIP3: !Ref 'WSFCNode1PrivateIP3'
+        WSFCNode2InstanceType: !Ref 'WSFCNodeInstanceType'
+        WSFCNode2NetBIOSName: !Ref 'WSFCNode2NetBIOSName'
+        WSFCNode2PrivateIP1: !Ref 'WSFCNode2PrivateIP1'
+        WSFCNode2PrivateIP2: !Ref 'WSFCNode2PrivateIP2'
+        WSFCNode2PrivateIP3: !Ref 'WSFCNode2PrivateIP3'
+        WSFCNode3NetBIOSName: !Ref 'WSFCNode3NetBIOSName'
+        WSFCNode3PrivateIP1: !If
+          - IsTwoAz
+          - !Ref 'AWS::NoValue'
+          - !Ref 'WSFCNode3PrivateIP1'
+        WSFCNode3PrivateIP2: !If
+          - IsTwoAz
+          - !Ref 'AWS::NoValue'
+          - !Ref 'WSFCNode3PrivateIP2'
+        WSFCNode3PrivateIP3: !If
+          - IsTwoAz
+          - !Ref 'AWS::NoValue'
+          - !Ref 'WSFCNode3PrivateIP3'
+  SQLDediStack:
+    Condition: HostTypeIsDediHost
+    DependsOn: ADStack
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:
+        Fn::Sub:
+          - https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/sql-dedicated-hosts.template
+          - S3Region: !If
+              - UsingDefaultBucket
+              - !Ref AWS::Region
+              - !Ref QSS3BucketRegion
+            S3Bucket: !If
+              - UsingDefaultBucket
+              - !Sub '${QSS3BucketName}-${AWS::Region}'
+              - !Ref QSS3BucketName
+      Parameters:
+        ADScenarioType: !Ref 'ADScenarioType'
+        ADServer1PrivateIP: !If
+          - UseAWSDirectoryServiceEE
+          - !GetAtt 'ADStack.Outputs.ADServer1PrivateIP'
+          - !Ref 'ADServer1PrivateIP'
+        ADServer2PrivateIP: !If
+          - UseAWSDirectoryServiceEE
+          - !GetAtt 'ADStack.Outputs.ADServer2PrivateIP'
+          - !Ref 'ADServer2PrivateIP'
+        ClusterName: !Ref 'ClusterName'
+        AvailabiltyGroupName: !Ref 'AvailabiltyGroupName'
+        DedicatedHostAMI: !Ref 'DedicatedHostAMI'
+        DedicatedHostIDNode1: !GetAtt 'DediHostStack.Outputs.DedicatedHost1'
+        DedicatedHostIDNode2: !GetAtt 'DediHostStack.Outputs.DedicatedHost2'
+        DedicatedHostIDNode3: !GetAtt 'DediHostStack.Outputs.DedicatedHost3'
+        DomainAdminPassword: !Ref 'DomainAdminPassword'
+        DomainAdminUser: !If
+          - UseAWSDirectoryServiceEE
+          - admin
+          - !Ref 'DomainAdminUser'
+        DomainDNSName: !Ref 'DomainDNSName'
+        DomainMemberSGID: !GetAtt 'ADStack.Outputs.DomainMemberSGID'
+        DomainNetBIOSName: !Ref 'DomainNetBIOSName'
+        KeyPairName: !Ref 'KeyPairName'
+        PrivateSubnet1ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet1AID'
+        PrivateSubnet2ID: !GetAtt 'VPCStack.Outputs.PrivateSubnet2AID'
+        PrivateSubnet3ID: !If
+          - IsTwoAz
+          - !Ref 'AWS::NoValue'
+          - !GetAtt 'VPCStack.Outputs.PrivateSubnet3AID'
+        QSS3BucketName: !Ref 'QSS3BucketName'
+        QSS3BucketRegion: !Ref 'QSS3BucketRegion'
+        QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
+        SQL2016Media: !Ref 'SQL2016Media'
+        SQL2017Media: !Ref 'SQL2017Media'
+        SQL2019Media: !Ref 'SQL2019Media'
+        SQLServerVersion: !Ref 'SQLServerVersion'
+        SQLServiceAccount: !Ref 'SQLServiceAccount'
+        SQLServiceAccountPassword: !Ref 'SQLServiceAccountPassword'
+        ThirdAZ: !Ref 'ThirdAZ'
+        VPCID: !GetAtt 'VPCStack.Outputs.VPCID'
+        Volume1Iops: !Ref 'VolumeIops'
+        Volume1Size: !Ref 'VolumeSize'
+        Volume1Type: !Ref 'VolumeType'
+        Volume2Iops: !Ref 'VolumeIops'
+        Volume2Size: !Ref 'VolumeSize'
+        Volume2Type: !Ref 'VolumeType'
+        Volume3Iops: !Ref 'VolumeIops'
+        Volume3Size: !Ref 'VolumeSize'
+        Volume3Type: !Ref 'VolumeType'
+        WitnessType: !Ref 'WitnessType'
         WSFCFileServerInstanceType: !Ref 'WSFCFileServerInstanceType'
         WSFCFileServerNetBIOSName: !Ref 'WSFCFileServerNetBIOSName'
         WSFCFileServerPrivateIP: !Ref 'WSFCFileServerPrivateIP'

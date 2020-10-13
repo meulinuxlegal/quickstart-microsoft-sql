@@ -20,6 +20,9 @@ param(
     [string]$SQLSecret,
 
     [Parameter(Mandatory=$false)]
+    [string]$FSXFileSystemID,
+
+    [Parameter(Mandatory=$false)]
     [string]$FileServerNetBIOSName
 
 )
@@ -34,6 +37,14 @@ $SQLAdminUser = $DomainNetBIOSName + '\' + $SQLUser.UserName
 # Creating Credential Object for Administrator
 $Credentials = (New-Object PSCredential($ClusterAdminUser,(ConvertTo-SecureString $AdminUser.Password -AsPlainText -Force)))
 $SQLCredentials = (New-Object PSCredential($SQLAdminUser,(ConvertTo-SecureString $SQLUser.Password -AsPlainText -Force)))
+
+if ($FSXFileSystemID) {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
+    Install-Module -Name AWSPowerShell -Confirm:$false -Force
+    $DnsName = Get-FSxFileSystem -FileSystemId $FSXFileSystemID | Select DnsName -ExpandProperty DnsName
+    $ShareName = "\\" + $DnsName + "\share"
+}
 
 if ($FileServerNetBIOSName) {
     $ShareName = "\\" + $FileServerNetBIOSName + "." + $DomainDnsName + "\witness"
@@ -122,7 +133,7 @@ Configuration WSFCNode1Config {
             DependsOn                     = '[Group]Administrators'
         }
 
-        if ($FileServerNetBIOSName) {
+        if ($FSXFileSystemID) {
             xClusterQuorum 'SetQuorumToNodeAndFileShareMajority' {
                 IsSingleInstance = 'Yes'
                 Type             = 'NodeAndFileShareMajority'
