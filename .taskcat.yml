@@ -45,6 +45,7 @@ tests:
       DomainAdminPassword: $[taskcat_genpass_16]
       KeyPairName: $[taskcat_getkeypair]
       QSS3BucketName: $[taskcat_autobucket]
+      NumberOfRDGWHosts: '0'
       RDGWCIDR: 0.0.0.0/0
       SQLLicenseProvided: 'no'
       SQLServiceAccountPassword: $[taskcat_genpass_16]
@@ -61,6 +62,7 @@ tests:
       DomainAdminPassword: $[taskcat_genpass_16]
       KeyPairName: $[taskcat_getkeypair]
       QSS3BucketName: $[taskcat_autobucket]
+      NumberOfRDGWHosts: '0'
       RDGWCIDR: 0.0.0.0/0
       SQLLicenseProvided: 'no'
       SQLServiceAccountPassword: $[taskcat_genpass_16]
@@ -80,6 +82,7 @@ tests:
       DomainAdminPassword: $[taskcat_genpass_16]
       KeyPairName: $[taskcat_getkeypair]
       QSS3BucketName: $[taskcat_autobucket]
+      NumberOfRDGWHosts: '0'
       RDGWCIDR: 0.0.0.0/0
       SQLLicenseProvided: 'no'
       SQLServiceAccountPassword: $[taskcat_genpass_16]
@@ -101,6 +104,7 @@ tests:
       KeyPairName: $[taskcat_getkeypair]
       QSS3BucketName: $[taskcat_autobucket]
       QSS3BucketRegion: $[taskcat_current_region]
+      NumberOfRDGWHosts: '0'
       RDGWCIDR: 0.0.0.0/0
       SQLLicenseProvided: 'no'
       SQLServiceAccountPassword: $[taskcat_genpass_16]
@@ -121,6 +125,7 @@ tests:
       KeyPairName: $[taskcat_getkeypair]
       QSS3BucketName: $[taskcat_autobucket]
       QSS3BucketRegion: $[taskcat_current_region]
+      NumberOfRDGWHosts: '0'
       RDGWCIDR: 0.0.0.0/0
       SQLLicenseProvided: 'no'
       SQLServiceAccountPassword: $[taskcat_genpass_16]
@@ -142,6 +147,7 @@ tests:
       KeyPairName: $[taskcat_getkeypair]
       QSS3BucketName: $[taskcat_autobucket]
       QSS3BucketRegion: $[taskcat_current_region]
+      NumberOfRDGWHosts: '0'
       RDGWCIDR: 0.0.0.0/0
       SQLLicenseProvided: 'yes'
       SQLServerVersion: '2017'
