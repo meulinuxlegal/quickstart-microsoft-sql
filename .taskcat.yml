@@ -57,7 +57,7 @@ tests:
     template: templates/sql-master.template
   mssql-ds-fsx:
     parameters:
-      ADScenarioType: AWS Directory Service for Microsoft AD (Enterprise Edition)
+      ADScenarioType: Microsoft AD on Amazon EC2
       AvailabilityZones: $[taskcat_getaz_2]
       DomainAdminPassword: $[taskcat_genpass_16]
       KeyPairName: $[taskcat_getkeypair]
