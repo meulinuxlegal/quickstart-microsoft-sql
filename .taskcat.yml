@@ -70,7 +70,7 @@ tests:
       QSS3BucketRegion: $[taskcat_current_region]
       WitnessType: FSx
     regions:
-    - us-east-1
+    - us-east-2
     s3_bucket: ''
     template: templates/sql-master.template
   mssql-ds-3rdaz-witness:
