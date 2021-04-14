@@ -1,4 +1,16 @@
-== Post-launch task
+== Post-deployment steps
+
+=== Run Windows Updates
+
+In order to ensure the deployed servers' operating systems and installed applications have the latest Microsoft updates, run Windows Update on each server.
+
+1. Create an RDP session from the Remote Desktop Gateway server to each deployed server.
+2. Open the *Settings* application.
+3. Open *Update & Security*.
+4. Click *Check for updates*.
+5. Install any updates and reboot if necessary.
+
+=== Post-launch task
 
 There is a known issue with the Microsoft SQL Quick Start wherein the secondary cluster IP address is not added to the cluster.
 
