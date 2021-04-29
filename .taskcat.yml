@@ -35,7 +35,7 @@ tests:
 #    regions:
 #    - eu-west-2
 #    s3_bucket: ''
-#    template: templates/sql-master.template
+#    template: templates/sql-main.template.yaml
   mssql-ds:
     parameters:
       ADScenarioType: Microsoft AD on Amazon EC2
@@ -54,7 +54,7 @@ tests:
     regions:
     - eu-west-1
     s3_bucket: ''
-    template: templates/sql-master.template
+    template: templates/sql-main.template.yaml
   mssql-ds-fsx:
     parameters:
       ADScenarioType: Microsoft AD on Amazon EC2
@@ -72,7 +72,7 @@ tests:
     regions:
     - us-east-2
     s3_bucket: ''
-    template: templates/sql-master.template
+    template: templates/sql-main.template.yaml
   mssql-ds-3rdaz-witness:
     parameters:
       ADScenarioType: Microsoft AD on Amazon EC2
@@ -93,7 +93,7 @@ tests:
     regions:
     - us-west-2
     s3_bucket: ''
-    template: templates/sql-master.template
+    template: templates/sql-main.template.yaml
   mssql-ec2-3rdaz-witness:
     parameters:
       ADScenarioType: Microsoft AD on Amazon EC2
@@ -114,7 +114,7 @@ tests:
     regions:
     - ap-southeast-1
     s3_bucket: ''
-    template: templates/sql-master.template
+    template: templates/sql-main.template.yaml
   mssql-ec2-ebs-io1:
     parameters:
       ADScenarioType: Microsoft AD on Amazon EC2
@@ -136,7 +136,7 @@ tests:
     regions:
     - ca-central-1
     s3_bucket: ''
-    template: templates/sql-master.template
+    template: templates/sql-main.template.yaml
   mssql-ec2-li-2017:
     parameters:
       ADScenarioType: Microsoft AD on Amazon EC2
@@ -155,7 +155,7 @@ tests:
     regions:
     - us-west-1
     s3_bucket: ''
-    template: templates/sql-master.template
+    template: templates/sql-main.template.yaml
 #  mssql-ec2-sql-2016:
 #    parameters:
 #      ADScenarioType: Microsoft AD on Amazon EC2
@@ -171,5 +171,5 @@ tests:
 #    regions:
 #    - us-east-2
 #    s3_bucket: ''
-#    template: templates/sql-master.template
+#    template: templates/sql-main.template.yaml
 #

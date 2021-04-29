@@ -6,6 +6,9 @@ Description: >-
   This template creates Amazon EC2 Windows instance and related resources. You will
   be billed for the AWS resources used if you create a stack from this template.
 Metadata:
+  QuickStartDocumentation:
+    EntrypointName: "Parameters for deploying into a new VPC"
+    Order: "1"
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
@@ -809,7 +812,7 @@ Resources:
     Properties:
       TemplateURL:
         Fn::Sub:
-          - https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/sql.template
+          - https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/sql.template.yaml
           - S3Region: !If
               - UsingDefaultBucket
               - !Ref AWS::Region
