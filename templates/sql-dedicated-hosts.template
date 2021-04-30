@@ -589,10 +589,6 @@ Conditions:
   UseAWSDirectoryServiceEE: !Equals
     - !Ref 'ADScenarioType'
     - AWS Directory Service for Microsoft AD (Enterprise Edition)
-  IsThreeAz: !Not
-    - !Equals
-      - !Ref 'ThirdAZ'
-      - 'no'
   ThirdAzIsWitness: !Equals
     - !Ref 'ThirdAZ'
     - witness
@@ -612,15 +608,6 @@ Conditions:
   Vol3IsIo1: !Equals
     - !Ref 'Volume2Type'
     - io1
-  SQLVersion2016: !Equals
-    - !Ref 'SQLServerVersion'
-    - '2016'
-  SQLVersion2017: !Equals
-    - !Ref 'SQLServerVersion'
-    - '2017'
-  GovCloudCondition: !Equals
-    - !Ref 'AWS::Region'
-    - us-gov-west-1
   FSxWitness: !Equals
     - !Ref 'WitnessType'
     - 'FSx'
@@ -2373,7 +2360,7 @@ Resources:
   WSFCNode1:
     Type: AWS::EC2::Instance
     Properties:
-      HostId: DedicatedHostIDNode1
+      HostId: !Ref DedicatedHostIDNode1
       ImageId: !Ref DedicatedHostAMI
       IamInstanceProfile: !Ref 'WSFCProfile'
       InstanceType: !Ref 'WSFCNode1InstanceType'
@@ -2408,7 +2395,7 @@ Resources:
     Type: AWS::EC2::Instance
     Condition: ThirdAzIsFullNode
     Properties:
-      HostId: DedicatedHostIDNode3
+      HostId: !Ref DedicatedHostIDNode3
       ImageId: !Ref DedicatedHostAMI
       IamInstanceProfile: !Ref 'WSFCProfile'
       InstanceType: !Ref 'WSFCNode3InstanceType'
@@ -2442,7 +2429,7 @@ Resources:
   WSFCNode2:
     Type: AWS::EC2::Instance
     Properties:
-      HostId: DedicatedHostIDNode2
+      HostId: !Ref DedicatedHostIDNode2
       ImageId: !Ref DedicatedHostAMI
       IamInstanceProfile: !Ref 'WSFCProfile'
       InstanceType: !Ref 'WSFCNode2InstanceType'
@@ -2895,11 +2882,10 @@ Resources:
           SourceSecurityGroupId: !Ref DomainMemberSGID
   FSXFileSystem:
     Type: 'AWS::FSx::FileSystem'
-    DependsOn: FSxSG
     Condition: FSxWitness
     Properties:
       FileSystemType: WINDOWS
-      StorageCapacity: 32
+      StorageCapacity: 300
       StorageType: SSD
       SubnetIds:
         - !Ref PrivateSubnet1ID

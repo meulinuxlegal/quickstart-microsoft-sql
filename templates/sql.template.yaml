@@ -602,10 +602,6 @@ Conditions:
   UseAWSDirectoryServiceEE: !Equals
     - !Ref 'ADScenarioType'
     - AWS Directory Service for Microsoft AD (Enterprise Edition)
-  IsThreeAz: !Not
-    - !Equals
-      - !Ref 'ThirdAZ'
-      - 'no'
   ThirdAzIsWitness: !Equals
     - !Ref 'ThirdAZ'
     - witness
@@ -634,9 +630,6 @@ Conditions:
   SQLVersion2017: !Equals
     - !Ref 'SQLServerVersion'
     - '2017'
-  GovCloudCondition: !Equals
-    - !Ref 'AWS::Region'
-    - us-gov-west-1
   FSxWitness: !Equals
     - !Ref 'WitnessType'
     - 'FSx'
@@ -2951,11 +2944,10 @@ Resources:
           SourceSecurityGroupId: !Ref DomainMemberSGID
   FSXFileSystem:
     Type: 'AWS::FSx::FileSystem'
-    DependsOn: FSxSG
     Condition: FSxWitness
     Properties:
       FileSystemType: WINDOWS
-      StorageCapacity: 32
+      StorageCapacity: 300
       StorageType: SSD
       SubnetIds:
         - !Ref PrivateSubnet1ID
