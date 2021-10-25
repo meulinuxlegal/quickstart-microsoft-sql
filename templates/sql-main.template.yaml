@@ -4,8 +4,13 @@ Description: >-
   AlwaysOn Availability Group nodes. This template also deploys the required AD architecture
   outlined in "Implementing Active Directory Domain Services in the AWS Cloud" **WARNING**
   This template creates Amazon EC2 Windows instance and related resources. You will
-  be billed for the AWS resources used if you create a stack from this template.
+  be billed for the AWS resources used if you create a stack from this template. (qs-1sddrm0t1)
 Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+        - E9101
+        - W9006
   QuickStartDocumentation:
     EntrypointName: "Parameters for deploying into a new VPC"
     Order: "1"
@@ -88,12 +93,24 @@ Metadata:
           - WSFCFileServerInstanceType
           - WSFCFileServerPrivateIP
       - Label:
+          default: Application Insights configuration
+        Parameters:
+          - EnableAppInsights
+          - ApplicationName
+          - ResourceGroupName
+      - Label:
           default: AWS Quick Start configuration
         Parameters:
           - QSS3BucketName
           - QSS3BucketRegion
           - QSS3KeyPrefix
     ParameterLabels:
+      ApplicationName:
+        default: Application Insights application name
+      EnableAppInsights:
+        default: Enable Application Insights
+      ResourceGroupName:
+        default: Resource Group name
       ADScenarioType:
         default: AD scenario type
       ADServer1InstanceType:
@@ -211,6 +228,21 @@ Metadata:
       WSFCNodeInstanceType:
         default: Instance type for cluster nodes
 Parameters:
+  ApplicationName:
+    Default: MSSQL
+    Description: Application Insights application name
+    Type: String
+  EnableAppInsights:
+    Type: String
+    Default: 'false'
+    Description: Select whether to enable Application Insights
+    AllowedValues:
+      - 'true'
+      - 'false'
+  ResourceGroupName:
+    Type: String
+    Default: SQL
+    Description: Application Resource Group name
   ADScenarioType:
     AllowedValues:
       - AWS Directory Service for Microsoft AD (Enterprise Edition)
@@ -816,6 +848,9 @@ Resources:
               - !Sub '${QSS3BucketName}-${AWS::Region}'
               - !Ref QSS3BucketName
       Parameters:
+        ApplicationName: !Ref 'ApplicationName'
+        EnableAppInsights: !Ref 'EnableAppInsights'
+        ResourceGroupName: !Ref 'ResourceGroupName'
         ADScenarioType: !Ref 'ADScenarioType'
         ADServer1PrivateIP: !If
           - UseAWSDirectoryServiceEE
