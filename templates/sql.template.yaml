@@ -7,6 +7,11 @@ Description: >-
   Amazon EC2 Windows instance and related resources. You will be billed for the AWS
   resources used if you create a stack from this template. (qs-1qup6rahc)
 Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+        - E9101
+        - W9006
   QuickStartDocumentation:
     EntrypointName: "Parameters for deploying into an existing VPC"
     Order: "2"
@@ -79,6 +84,12 @@ Metadata:
           - WSFCNode3PrivateIP2
           - WSFCNode3PrivateIP3
       - Label:
+          default: Application Insights configuration
+        Parameters:
+          - EnableAppInsights
+          - ApplicationName
+          - ResourceGroupName
+      - Label:
           default: AWS Systems Manager AMI configuration
         Parameters:
           - WS2019FULLBASE
@@ -92,6 +103,12 @@ Metadata:
           - QSS3BucketRegion
           - QSS3KeyPrefix
     ParameterLabels:
+      ApplicationName:
+        default: Application Insights application name
+      EnableAppInsights:
+        default: Enable Application Insights
+      ResourceGroupName:
+        default: Resource Group name
       ADScenarioType:
         default: AD scenario type
       ADServer1PrivateIP:
@@ -209,6 +226,21 @@ Metadata:
       WS2019FULLSQL2016ENT:
         default: Windows Server 2019 Locale English with SQL Enterprise 2016 AMI
 Parameters:
+  ApplicationName:
+    Default: MSSQL
+    Description: Application Insights application name
+    Type: String
+  EnableAppInsights:
+    Type: String
+    Default: 'false'
+    Description: Select whether to enable Application Insights
+    AllowedValues:
+      - 'true'
+      - 'false'
+  ResourceGroupName:
+    Type: String
+    Default: SQL
+    Description: Application Resource Group name
   ADScenarioType:
     AllowedValues:
       - "AWS Directory Service for Microsoft AD (Enterprise Edition)"
@@ -598,6 +630,7 @@ Parameters:
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-SQL_2016_SP2_Enterprise'
 Conditions:
+  EnableAppInsightForSQLHA: !Equals [!Ref 'EnableAppInsights', 'true']
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
   UseAWSDirectoryServiceEE: !Equals
     - !Ref 'ADScenarioType'
@@ -676,12 +709,12 @@ Resources:
               - Action:
                   - s3:GetObject
                 Resource: 
-                  - !Sub 'arn:aws:s3:::aws-ssm-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::aws-windows-downloads-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::amazon-ssm-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::amazon-ssm-packages-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::${AWS::Region}-birdwatcher-prod/*'
-                  - !Sub 'arn:aws:s3:::patch-baseline-snapshot-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::aws-ssm-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::aws-windows-downloads-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::amazon-ssm-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::amazon-ssm-packages-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::${AWS::Region}-birdwatcher-prod/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::patch-baseline-snapshot-${AWS::Region}/*'
                 Effect: Allow
           PolicyName: ssm-custom-s3-policy
         - PolicyDocument:
@@ -2304,12 +2337,12 @@ Resources:
               - Action:
                   - s3:GetObject
                 Resource: 
-                  - !Sub 'arn:aws:s3:::aws-ssm-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::aws-windows-downloads-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::amazon-ssm-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::amazon-ssm-packages-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::${AWS::Region}-birdwatcher-prod/*'
-                  - !Sub 'arn:aws:s3:::patch-baseline-snapshot-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::aws-ssm-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::aws-windows-downloads-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::amazon-ssm-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::amazon-ssm-packages-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::${AWS::Region}-birdwatcher-prod/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::patch-baseline-snapshot-${AWS::Region}/*'
                 Effect: Allow
           PolicyName: ssm-custom-s3-policy
         - PolicyDocument:
@@ -2427,6 +2460,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Ref 'WSFCNode1NetBIOSName'
+        - Key: ResourceGroup
+          Value: !Ref ResourceGroupName
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -2470,6 +2505,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Ref 'WSFCNode3NetBIOSName'
+        - Key: ResourceGroup
+          Value: !Ref ResourceGroupName
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -2512,6 +2549,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Ref 'WSFCNode2NetBIOSName'
+        - Key: ResourceGroup
+          Value: !Ref ResourceGroupName
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -2591,7 +2630,7 @@ Resources:
             - ';"URLSuffix"='
             - !Sub '"${AWS::URLSuffix}"'
             - ';"AutomationAssumeRole"='
-            - !Sub '"arn:aws:iam::${AWS::AccountId}:role/${AWSQuickstartMSSQLRole}"'
+            - !Sub '"arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${AWSQuickstartMSSQLRole}"'
             - '}'
             - "\n"
             - "</powershell>\n"
@@ -2972,6 +3011,51 @@ Resources:
           DomainName: !Ref DomainDNSName
           UserName: !Ref DomainAdminUser
           Password: !Ref DomainAdminPassword
+  ResourceGroup:
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name: !Ref 'ResourceGroupName'
+      Description: "A resource group for SQL servers"
+      ResourceQuery:
+        Type:
+          "TAG_FILTERS_1_0" 
+        Query:
+          ResourceTypeFilters: 
+            - "AWS::EC2::Instance" 
+          TagFilters:
+            - 
+              Key: ResourceGroup
+              Values: 
+                - !Ref ResourceGroupName
+  AppInsightsForSQLHA:
+    Condition: EnableAppInsightForSQLHA
+    DependsOn: SSMWaitCondition
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName: !Ref 'ResourceGroupName'
+      AutoConfigurationEnabled: false
+      CustomComponents:
+        - ComponentName: !Sub 'SQLHAClusterInstances-${ApplicationName}'
+          ResourceList:
+            - !Sub 'arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${WSFCNode1}'
+            - !Sub 'arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${WSFCNode2}'
+            - !If
+              - ThirdAzIsFullNode
+              - !Sub 'arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${WSFCNode3}'
+              - !Ref 'AWS::NoValue'
+
+      ComponentMonitoringSettings:
+        - ComponentName: !Sub 'SQLHAClusterInstances-${ApplicationName}'
+          Tier: SQL_SERVER_ALWAYSON_AVAILABILITY_GROUP
+          ComponentConfigurationMode: DEFAULT_WITH_OVERWRITE
+          DefaultOverwriteComponentConfiguration:
+            SubComponentTypeConfigurations:
+              - SubComponentType: AWS::EC2::Instance
+                SubComponentConfigurationDetails:
+                  Logs:
+                    - LogGroupName: !Sub 'SQL_SERVER-${ResourceGroupName}'
+                      LogType: SQL_SERVER
+                      LogPath: C:\Program Files\Microsoft SQL Server\MSSQL**.MSSQLSERVER\MSSQL\Log\ERRORLOG
 Outputs:
   WSFCNode1NetBIOSName:
     Value: !Ref 'WSFCNode1NetBIOSName'

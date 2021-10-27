@@ -76,6 +76,12 @@ Metadata:
           - WSFCNode3PrivateIP2
           - WSFCNode3PrivateIP3
       - Label:
+          default: Application Insights configuration
+        Parameters:
+				  - EnableAppInsights
+          - ApplicationName
+					- ResourceGroupName
+      - Label:
           default: AWS Systems Manager AMI configuration
         Parameters:
           - WS2019FULLBASE
@@ -89,6 +95,12 @@ Metadata:
           - QSS3BucketRegion
           - QSS3KeyPrefix
     ParameterLabels:
+      ApplicationName:
+        default: Application Insights application name
+			EnableAppInsights:
+			  default: Enable Application Insights
+			ResourceGroupName:
+			  default: Resource Group name
       ADScenarioType:
         default: AD scenario type
       ADServer1PrivateIP:
@@ -206,6 +218,21 @@ Metadata:
       WS2019FULLSQL2016ENT:
         default: Windows Server 2019 Locale English with SQL Enterprise 2016 AMI
 Parameters:
+  ApplicationName:
+    Default: MSSQL
+    Description: Application Insights application name
+    Type: String
+  EnableAppInsights:
+    Type: String
+    Default: 'false'
+    Description: Select whether to enable Application Insights
+    AllowedValues:
+      - 'true'
+      - 'false'
+  ResourceGroupName:
+    Type: String
+    Default: SQL
+    Description: Application Resource Group name
   ADScenarioType:
     AllowedValues:
       - "AWS Directory Service for Microsoft AD (Enterprise Edition)"
@@ -595,6 +622,7 @@ Parameters:
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-SQL_2016_SP2_Enterprise'
 Conditions:
+  EnableAppInsightForSQLHA: !Equals [!Ref 'EnableAppInsights', 'true']
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
   UseAWSDirectoryServiceEE: !Equals
     - !Ref 'ADScenarioType'
@@ -2977,6 +3005,34 @@ Resources:
           DomainName: !Ref DomainDNSName
           UserName: !Ref DomainAdminUser
           Password: !Ref DomainAdminPassword
+  AppInsightsForSQLHA:
+    Condition: EnableAppInsightForSQLHA
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName: !Ref 'ResourceGroupName'
+      AutoConfigurationEnabled: false
+      CustomComponents:
+        - ComponentName: !Sub 'SQLHAClusterInstances-${ApplicationName}'
+          ResourceList:
+            - !Sub 'arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/${WSFCNode1}'
+            - !Sub 'arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/${WSFCNode2}'
+            - !If
+              - ThirdAzIsFullNode
+              - !Sub 'arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/${WSFCNode3}'
+              - !Ref 'AWS::NoValue'
+
+      ComponentMonitoringSettings:
+        - ComponentName: !Sub 'SQLHAClusterInstances-${ApplicationName}'
+          Tier: SQL_SERVER_ALWAYSON_AVAILABILITY_GROUP
+          ComponentConfigurationMode: DEFAULT_WITH_OVERWRITE
+          DefaultOverwriteComponentConfiguration:
+            SubComponentTypeConfigurations:
+              - SubComponentType: AWS::EC2::Instance
+                SubComponentConfigurationDetails:
+                  Logs:
+                    - LogGroupName: !Sub 'SQL_SERVER-${ResourceGroupName}'
+                      LogType: SQL_SERVER
+                      LogPath: C:\Program Files\Microsoft SQL Server\MSSQL**.MSSQLSERVER\MSSQL\Log\ERRORLOG
 Outputs:
   WSFCNode1NetBIOSName:
     Value: !Ref 'WSFCNode1NetBIOSName'

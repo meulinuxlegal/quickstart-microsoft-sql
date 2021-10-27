@@ -122,6 +122,7 @@ tests:
       ADServer2NetBIOSName: SQLDC2
       AvailabilityZones: $[taskcat_getaz_2]
       DomainAdminPassword: $[taskcat_genpass_16]
+      EnableAppInsights: 'true'
       KeyPairName: $[taskcat_getkeypair]
       QSS3BucketName: $[taskcat_autobucket]
       QSS3BucketRegion: $[taskcat_current_region]
