@@ -2460,6 +2460,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Ref 'WSFCNode1NetBIOSName'
+        - Key: ResourceGroup
+          Value: !Ref ResourceGroupName
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -2503,6 +2505,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Ref 'WSFCNode3NetBIOSName'
+        - Key: ResourceGroup
+          Value: !Ref ResourceGroupName
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -2545,6 +2549,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Ref 'WSFCNode2NetBIOSName'
+        - Key: ResourceGroup
+          Value: !Ref ResourceGroupName
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -3005,8 +3011,25 @@ Resources:
           DomainName: !Ref DomainDNSName
           UserName: !Ref DomainAdminUser
           Password: !Ref DomainAdminPassword
+  ResourceGroup:
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name: !Ref 'ResourceGroupName'
+      Description: "A resource group for SQL servers"
+      ResourceQuery:
+        Type:
+          "TAG_FILTERS_1_0" 
+        Query:
+          ResourceTypeFilters: 
+            - "AWS::EC2::Instance" 
+          TagFilters:
+            - 
+              Key: ResourceGroup
+              Values: 
+                - !Ref ResourceGroupName
   AppInsightsForSQLHA:
     Condition: EnableAppInsightForSQLHA
+    DependsOn: SSMWaitCondition
     Type: AWS::ApplicationInsights::Application
     Properties:
       ResourceGroupName: !Ref 'ResourceGroupName'
