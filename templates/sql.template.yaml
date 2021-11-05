@@ -620,15 +620,19 @@ Parameters:
   WS2019FULLBASE:
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base'
+    Description: AMI for Windows Server 2019
   WS2019FULLSQL2019ENT:
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-SQL_2019_Enterprise'
+    Description: AMI for Windows Server 2019 with SQL 2019 Enterprise
   WS2019FULLSQL2017ENT:
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-SQL_2017_Enterprise'
+    Description: AMI for Windows Server 2019 with SQL 2017 Enterprise
   WS2019FULLSQL2016ENT:
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-SQL_2016_SP2_Enterprise'
+    Description: AMI for Windows Server 2019 with SQL 2016 Enterprise
 Conditions:
   EnableAppInsightForSQLHA: !Equals [!Ref 'EnableAppInsights', 'true']
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
@@ -3056,6 +3060,9 @@ Resources:
                     - LogGroupName: !Sub 'SQL_SERVER-${ResourceGroupName}'
                       LogType: SQL_SERVER
                       LogPath: C:\Program Files\Microsoft SQL Server\MSSQL**.MSSQLSERVER\MSSQL\Log\ERRORLOG
+      Tags:
+        - Key: SourceTemplate
+          Value: AWSQuickStart
 Outputs:
   WSFCNode1NetBIOSName:
     Value: !Ref 'WSFCNode1NetBIOSName'
