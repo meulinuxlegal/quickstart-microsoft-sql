@@ -140,6 +140,13 @@ Configuration WSFCNode1Config {
                 Resource         = $ShareName
                 DependsOn        = '[xCluster]CreateCluster'
             }
+        } elseif ($FileServerNetBIOSName) {
+            xClusterQuorum 'SetQuorumToNodeAndFileShareMajority' {
+                IsSingleInstance = 'Yes'
+                Type             = 'NodeAndFileShareMajority'
+                Resource         = $ShareName
+                DependsOn        = '[xCluster]CreateCluster'
+            }
         } else {
             xClusterQuorum 'SetQuorumToNodeMajority' {
                 IsSingleInstance = 'Yes'
