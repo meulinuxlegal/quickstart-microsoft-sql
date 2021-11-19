@@ -79,7 +79,6 @@ tests:
     template: templates/sql-main.template.yaml
   mssql-ds-3rdaz-witness:
     parameters:
-      ADScenarioType: Microsoft AD on Amazon EC2
       ADServer1NetBIOSName: SQLDC1
       ADServer2NetBIOSName: SQLDC2
       AvailabilityZones: $[taskcat_getaz_3]
@@ -98,7 +97,7 @@ tests:
       WSFCFileServerPrivateIP: 10.0.64.200
     regions:
     - us-west-2
-    s3_bucket: ''
+    s3_bucket: 'als3-mystuff'
     template: templates/sql-main.template.yaml
   mssql-ec2-3rdaz-witness:
     parameters:
