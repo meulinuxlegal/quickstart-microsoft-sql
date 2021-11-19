@@ -97,7 +97,7 @@ tests:
       WSFCFileServerPrivateIP: 10.0.64.200
     regions:
     - us-west-2
-    s3_bucket: 'als3-mystuff'
+    s3_bucket: ''
     template: templates/sql-main.template.yaml
   mssql-ec2-3rdaz-witness:
     parameters:
