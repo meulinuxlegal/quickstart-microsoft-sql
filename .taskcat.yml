@@ -79,7 +79,6 @@ tests:
     template: templates/sql-main.template.yaml
   mssql-ds-3rdaz-witness:
     parameters:
-      ADScenarioType: Microsoft AD on Amazon EC2
       ADServer1NetBIOSName: SQLDC1
       ADServer2NetBIOSName: SQLDC2
       AvailabilityZones: $[taskcat_getaz_3]

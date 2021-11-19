@@ -42,39 +42,6 @@ param(
 
 )
 
-Function Get-Domain {
-	
-	#Retrieve the Fully Qualified Domain Name if one is not supplied
-	# division.domain.root
-	if ($DomainDNSName -eq "") {
-		[String]$DomainDNSName = [System.DirectoryServices.ActiveDirectory.Domain]::getcurrentdomain()
-	}
-
-	# Create an Array 'Item' for each item in between the '.' characters
-	$FQDNArray = $DomainDNSName.split(".")
-	
-	# Add A Separator of ','
-	$Separator = ","
-
-	# For Each Item in the Array
-	# for (CreateVar; Condition; RepeatAction)
-	# for ($x is now equal to 0; while $x is less than total array length; add 1 to X
-	for ($x = 0; $x -lt $FQDNArray.Length ; $x++)
-		{ 
-
-		#If it's the last item in the array don't append a ','
-		if ($x -eq ($FQDNArray.Length - 1)) { $Separator = "" }
-		
-		# Append to $DN DC= plus the array item with a separator after
-		[string]$DN += "DC=" + $FQDNArray[$x] + $Separator
-		
-		# continue to next item in the array
-		}
-	
-	#return the Distinguished Name
-	return $DN
-}
-
 Function Convert-CidrtoSubnetMask { 
     Param ( 
         [String] $SubnetMaskCidr
@@ -125,13 +92,19 @@ if ($AGListener1PrivateIP3) {
     $IPADDR3 = 'IP/CIDR' -replace 'IP',$AGListener1PrivateIP3 -replace 'CIDR',(Convert-CidrtoSubnetMask -SubnetMaskCidr (Get-CIDR -Target $WSFCNode3NetBIOSName))  
 }
 
-if ($ManagedAD -eq 'Yes'){
-    $DN = Get-Domain
-    $IdentityReference = $DomainNetBIOSName + "\" + $ClusterName + "$"
-    $OUPath = 'OU=Computers,OU=' + $DomainNetBIOSName + "," + $DN
+if ($ManagedAD -eq 'Yes') {
+    Write-Output 'Getting AD domain'
+    Try {
+        $Domain = Get-ADDomain -ErrorAction Stop
+    } Catch [System.Exception] {
+        Write-Output "Failed to get AD domain $_"
+        Exit 1
+    }
+    $BaseDn = $Domain | Select-Object -ExpandProperty 'DistinguishedName'
+    $NetBIOS = $Domain | Select-Object -ExpandProperty 'NetBIOSName'
+    $IdentityReference = "$NetBIOS\$ClusterName$"
+    $OUPath = "OU=Computers,OU=$NetBIOS,$BaseDn"
 }
-
-
 
 $ConfigurationData = @{
     AllNodes = @(
