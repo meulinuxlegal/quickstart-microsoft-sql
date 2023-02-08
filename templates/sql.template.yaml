@@ -631,7 +631,7 @@ Parameters:
     Description: AMI for Windows Server 2019 with SQL 2017 Enterprise
   WS2019FULLSQL2016ENT:
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-    Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-SQL_2016_SP2_Enterprise'
+    Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-SQL_2016_SP3_Enterprise'
     Description: AMI for Windows Server 2019 with SQL 2016 Enterprise
 Conditions:
   EnableAppInsightForSQLHA: !Equals [!Ref 'EnableAppInsights', 'true']
