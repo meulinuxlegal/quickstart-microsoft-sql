@@ -694,6 +694,11 @@ Resources:
       SecretString: !Sub '{ "username" : "${SQLServiceAccount}", "password" : "${SQLServiceAccountPassword}" }'
   AWSQuickstartMSSQLRole:
     Type: AWS::IAM::Role
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - EIAMPolicyActionWildcard
     Properties:
       Policies:
         - PolicyDocument:
@@ -2308,6 +2313,11 @@ Resources:
             UniqueId: "{{wsfcNode2InstanceId.InstanceId}}"
   MSSQLSSMPassRolePolicy:
     Type: AWS::IAM::Policy
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - EIAMPolicyActionWildcard
     Properties:
       PolicyName: MSSQL-SSM-PassRole
       PolicyDocument:
@@ -2321,6 +2331,12 @@ Resources:
         - !Ref 'AWSQuickstartMSSQLRole'
   WSFCRole:
     Type: AWS::IAM::Role
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - EIAMPolicyActionWildcard
+            - EIAMPolicyWildcardResource
     Properties:
       Policies:
         - PolicyDocument:

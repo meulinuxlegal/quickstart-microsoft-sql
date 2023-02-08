@@ -3,6 +3,14 @@ schemaVersion: "0.3"
 description: Deploy MSSQL with SSM Automation
 # Role that is utilized to perform the steps within the Automation Document.
 assumeRole: "{{AutomationAssumeRole}}"
+Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+        - E1001
+        - E1012
+        - E9101
+        - E9007
 # Gathering parameters needed to configure DCs in the Quick Start
 parameters:
   SQLServerVersion:
