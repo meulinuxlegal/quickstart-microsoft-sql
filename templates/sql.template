@@ -2435,6 +2435,7 @@ Resources:
           Ebs:
             VolumeSize: 100
             VolumeType: gp2
+            Encrypted: true
       KeyName: !Ref 'KeyPairName'
   WSFCNode1:
     Type: AWS::EC2::Instance
@@ -2475,6 +2476,7 @@ Resources:
           Ebs:
             VolumeSize: 100
             VolumeType: gp2
+            Encrypted: true
         - DeviceName: /dev/xvdca
           VirtualName: ephemeral0
       KeyName: !Ref 'KeyPairName'
@@ -2518,6 +2520,7 @@ Resources:
           Ebs:
             VolumeSize: 100
             VolumeType: gp2
+            Encrypted: true
         - DeviceName: /dev/xvdca
           VirtualName: ephemeral0
       KeyName: !Ref 'KeyPairName'
@@ -2560,6 +2563,7 @@ Resources:
           Ebs:
             VolumeSize: 100
             VolumeType: gp2
+            Encrypted: true
         - DeviceName: /dev/xvdca
           VirtualName: ephemeral0
       KeyName: !Ref 'KeyPairName'

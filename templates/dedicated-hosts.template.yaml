@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: ''
+Description: (qs-1tsaami23)
 Metadata:
   cfn-lint:
     config:
