@@ -644,7 +644,6 @@ Resources:
           Ebs:
             VolumeSize: 100
             VolumeType: gp2
-            Encrypted: true
         - DeviceName: /dev/xvdca
           VirtualName: ephemeral0
       Volumes:
@@ -1219,6 +1218,7 @@ Resources:
     Properties:
       Size: 500
       VolumeType: gp2
+      Encrypted: true
       AvailabilityZone: !Select
         - 0
         - !GetAZs ''
@@ -1227,6 +1227,7 @@ Resources:
     Properties:
       Size: 500
       VolumeType: gp2
+      Encrypted: true
       AvailabilityZone: !Select
         - 0
         - !GetAZs ''
@@ -1235,6 +1236,7 @@ Resources:
     Properties:
       Size: 500
       VolumeType: gp2
+      Encrypted: true
       AvailabilityZone: !Select
         - 0
         - !GetAZs ''
@@ -1243,6 +1245,7 @@ Resources:
     Properties:
       Size: 500
       VolumeType: gp2
+      Encrypted: true
       AvailabilityZone: !Select
         - 1
         - !GetAZs ''
@@ -1251,6 +1254,7 @@ Resources:
     Properties:
       Size: 500
       VolumeType: gp2
+      Encrypted: true
       AvailabilityZone: !Select
         - 1
         - !GetAZs ''
@@ -1259,6 +1263,7 @@ Resources:
     Properties:
       Size: 500
       VolumeType: gp2
+      Encrypted: true
       AvailabilityZone: !Select
         - 1
         - !GetAZs ''

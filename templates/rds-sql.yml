@@ -72,13 +72,13 @@ Parameters:
   PrivateSubnet2ID:
     Description: ID of the private subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
-  PubliclyAccessible: 
-    AllowedValues: 
-      - "true"
-      - "false"
-    Default: "false"
-    Description: "Select whether DB instance is internet-facing."
-    Type: String
+#  PubliclyAccessible: 
+#    AllowedValues: 
+#      - "true"
+#      - "false"
+#    Default: "false"
+#    Description: "Select whether DB instance is internet-facing."
+#    Type: String
   DBInstanceClass:
     AllowedValues:
       - db.m5.large
@@ -219,7 +219,7 @@ Resources:
         - Fn::GetAtt:
           - WSFCClientSecurityGroup
           - GroupId
-      PubliclyAccessible: !Ref PubliclyAccessible
+      PubliclyAccessible: false
   WSFCClientSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:

@@ -326,7 +326,6 @@ Resources:
           Ebs:
             VolumeSize: 100
             VolumeType: gp2
-            Encrypted: true
       SecurityGroupIds:
         - !Ref 'DomainMemberSGID'
       KeyName: !Ref 'KeyPairName'

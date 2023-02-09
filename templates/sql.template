@@ -2647,6 +2647,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume1Size'
       VolumeType: !Ref 'Volume1Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode1.AvailabilityZone'
       Iops: !If
         - Vol1IsIo1
@@ -2657,6 +2658,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume2Size'
       VolumeType: !Ref 'Volume2Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode1.AvailabilityZone'
       Iops: !If
         - Vol2IsIo1
@@ -2667,6 +2669,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume3Size'
       VolumeType: !Ref 'Volume3Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode1.AvailabilityZone'
       Iops: !If
         - Vol3IsIo1
@@ -2677,6 +2680,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume1Size'
       VolumeType: !Ref 'Volume1Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode2.AvailabilityZone'
       Iops: !If
         - Vol1IsIo1
@@ -2687,6 +2691,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume2Size'
       VolumeType: !Ref 'Volume2Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode2.AvailabilityZone'
       Iops: !If
         - Vol2IsIo1
@@ -2697,6 +2702,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume3Size'
       VolumeType: !Ref 'Volume3Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode2.AvailabilityZone'
       Iops: !If
         - Vol3IsIo1
@@ -2708,6 +2714,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume1Size'
       VolumeType: !Ref 'Volume1Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode3.AvailabilityZone'
       Iops: !If
         - Vol1IsIo1
@@ -2719,6 +2726,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume2Size'
       VolumeType: !Ref 'Volume2Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode3.AvailabilityZone'
       Iops: !If
         - Vol2IsIo1
@@ -2730,6 +2738,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume3Size'
       VolumeType: !Ref 'Volume3Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode3.AvailabilityZone'
       Iops: !If
         - Vol3IsIo1
