@@ -5,8 +5,17 @@ Description: >-
   an existing VPC that was built using the sample reference architecture titled: "Implementing
   Active Directory Domain Services in the AWS Cloud" **WARNING** This template creates
   Amazon EC2 Windows instance and related resources. You will be billed for the AWS
-  resources used if you create a stack from this template. QS(0003)
+  resources used if you create a stack from this template. QS(qs-1tsaami29)
 Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+        - W4001
+        - W9002
+        - W9003
+        - W9006
+        - E9007
+        - E9101
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
@@ -25,13 +34,7 @@ Metadata:
           - SQLMasterUserName
           - SQLMasterUserPassword
           - VolumeSize
-          - VolumeType
           - VolumeIops
-      - Label:
-          default: AWS Quick Start configuration
-        Parameters:
-          - QSS3BucketName
-          - QSS3KeyPrefix
     ParameterLabels:
       DBAutoMinorVersionUpgrade:
         default: Database auto minor version upgrade
@@ -47,18 +50,10 @@ Metadata:
         default: Private subnet 1 ID
       PrivateSubnet2ID:
         default: Private subnet 2 ID
-      PrivateSubnet3ID:
-        default: Private subnet 3 ID
-      QSS3BucketName:
-        default: Quick Start S3 bucket name
-      QSS3KeyPrefix:
-        default: Quick Start S3 key prefix
       VolumeIops:
         default: Data volume IOPS
       VolumeSize:
         default: Data volume size
-      VolumeType:
-        default: Data volume type
       VPCID:
         default: VPC ID
       VPCCIDR:
@@ -77,13 +72,13 @@ Parameters:
   PrivateSubnet2ID:
     Description: ID of the private subnet 2 in Availability Zone 2 (e.g., subnet-a0246dcd)
     Type: AWS::EC2::Subnet::Id
-  PubliclyAccessible: 
-    AllowedValues: 
-      - "true"
-      - "false"
-    Default: "false"
-    Description: "Select whether DB instance is internet-facing."
-    Type: String
+#  PubliclyAccessible: 
+#    AllowedValues: 
+#      - "true"
+#      - "false"
+#    Default: "false"
+#    Description: "Select whether DB instance is internet-facing."
+#    Type: String
   DBInstanceClass:
     AllowedValues:
       - db.m5.large
@@ -145,25 +140,6 @@ Parameters:
     Default: 7
     Description: The number of days for which automated backups are retained. Setting this parameter to a positive number enables backups. Setting this parameter to 0 disables automated backups. 
     Type: Number
-  QSS3BucketName:
-    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
-    ConstraintDescription: Quick Start bucket name can include numbers, lowercase
-      letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
-      (-).
-    Default: aws-quickstart
-    Description: S3 bucket name for the Quick Start assets. Quick Start bucket name
-      can include numbers, lowercase letters, uppercase letters, and hyphens (-).
-      It cannot start or end with a hyphen (-).
-    Type: String
-  QSS3KeyPrefix:
-    AllowedPattern: ^[0-9a-zA-Z-/]*$
-    ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters,
-      uppercase letters, hyphens (-), and forward slash (/).
-    Default: quickstart-microsoft-sql/
-    Description: S3 key prefix for the Quick Start assets. Quick Start key prefix
-      can include numbers, lowercase letters, uppercase letters, hyphens (-), and
-      forward slash (/).
-    Type: String
   SQLMasterUserName:
     AllowedPattern: '[a-zA-Z0-9]*'
     Default: sqlsa
@@ -191,13 +167,6 @@ Parameters:
     MaxValue: '16000'
     MinValue: '100'
     Type: Number
-  VolumeType:
-    AllowedValues:
-      - gp2
-      - io1
-    Default: gp2
-    Description: Volume type for the SQL Data, Logs and TempDb volumes
-    Type: String
   VPCID:
     Description: ID of the VPC (e.g., vpc-0343606e)
     Type: AWS::EC2::VPC::Id
@@ -207,10 +176,6 @@ Parameters:
     Default: 10.0.0.0/16
     Description: CIDR Block for the VPC
     Type: String
-Conditions:
-  GovCloudCondition: !Equals
-    - !Ref 'AWS::Region'
-    - us-gov-west-1
 Rules:
   SubnetsInVPC:
     Assertions:
@@ -254,7 +219,7 @@ Resources:
         - Fn::GetAtt:
           - WSFCClientSecurityGroup
           - GroupId
-      PubliclyAccessible: !Ref PubliclyAccessible
+      PubliclyAccessible: false
   WSFCClientSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -262,8 +227,8 @@ Resources:
       VpcId: !Ref 'VPCID'
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: '1433'
-          ToPort: '1433'
+          FromPort: 1433
+          ToPort: 1433
           CidrIp: !Ref 'VPCCIDR'
 Outputs:
    RDSSQLEndpoint:

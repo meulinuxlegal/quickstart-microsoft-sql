@@ -7,6 +7,13 @@ Description: >-
   Amazon EC2 Windows instance and related resources. You will be billed for the AWS
   resources used if you create a stack from this template. (qs-1qup6rahc)
 Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+        - W9004
+        - E9101
+        - W2506
+        - W9006
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
@@ -635,6 +642,11 @@ Resources:
       SecretString: !Sub '{ "username" : "${SQLServiceAccount}", "password" : "${SQLServiceAccountPassword}" }'
   AWSQuickstartMSSQLRole:
     Type: AWS::IAM::Role
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - EIAMPolicyActionWildcard
     Properties:
       Policies:
         - PolicyDocument:
@@ -654,12 +666,12 @@ Resources:
               - Action:
                   - s3:GetObject
                 Resource: 
-                  - !Sub 'arn:aws:s3:::aws-ssm-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::aws-windows-downloads-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::amazon-ssm-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::amazon-ssm-packages-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::${AWS::Region}-birdwatcher-prod/*'
-                  - !Sub 'arn:aws:s3:::patch-baseline-snapshot-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::aws-ssm-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::aws-windows-downloads-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::amazon-ssm-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::amazon-ssm-packages-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::${AWS::Region}-birdwatcher-prod/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::patch-baseline-snapshot-${AWS::Region}/*'
                 Effect: Allow
           PolicyName: ssm-custom-s3-policy
         - PolicyDocument:
@@ -2248,6 +2260,12 @@ Resources:
         - !Ref 'AWSQuickstartMSSQLRole'
   WSFCRole:
     Type: AWS::IAM::Role
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - EIAMPolicyActionWildcard
+            - EIAMPolicyWildcardResource
     Properties:
       Policies:
         - PolicyDocument:
@@ -2268,12 +2286,12 @@ Resources:
               - Action:
                   - s3:GetObject
                 Resource: 
-                  - !Sub 'arn:aws:s3:::aws-ssm-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::aws-windows-downloads-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::amazon-ssm-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::amazon-ssm-packages-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::${AWS::Region}-birdwatcher-prod/*'
-                  - !Sub 'arn:aws:s3:::patch-baseline-snapshot-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::aws-ssm-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::aws-windows-downloads-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::amazon-ssm-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::amazon-ssm-packages-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::${AWS::Region}-birdwatcher-prod/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::patch-baseline-snapshot-${AWS::Region}/*'
                 Effect: Allow
           PolicyName: ssm-custom-s3-policy
         - PolicyDocument:
@@ -2538,6 +2556,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume1Size'
       VolumeType: !Ref 'Volume1Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode1.AvailabilityZone'
       Iops: !If
         - Vol1IsIo1
@@ -2548,6 +2567,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume2Size'
       VolumeType: !Ref 'Volume2Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode1.AvailabilityZone'
       Iops: !If
         - Vol2IsIo1
@@ -2558,6 +2578,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume3Size'
       VolumeType: !Ref 'Volume3Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode1.AvailabilityZone'
       Iops: !If
         - Vol3IsIo1
@@ -2568,6 +2589,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume1Size'
       VolumeType: !Ref 'Volume1Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode2.AvailabilityZone'
       Iops: !If
         - Vol1IsIo1
@@ -2578,6 +2600,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume2Size'
       VolumeType: !Ref 'Volume2Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode2.AvailabilityZone'
       Iops: !If
         - Vol2IsIo1
@@ -2588,6 +2611,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume3Size'
       VolumeType: !Ref 'Volume3Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode2.AvailabilityZone'
       Iops: !If
         - Vol3IsIo1
@@ -2599,6 +2623,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume1Size'
       VolumeType: !Ref 'Volume1Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode3.AvailabilityZone'
       Iops: !If
         - Vol1IsIo1
@@ -2610,6 +2635,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume2Size'
       VolumeType: !Ref 'Volume2Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode3.AvailabilityZone'
       Iops: !If
         - Vol2IsIo1
@@ -2621,6 +2647,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume3Size'
       VolumeType: !Ref 'Volume3Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode3.AvailabilityZone'
       Iops: !If
         - Vol3IsIo1

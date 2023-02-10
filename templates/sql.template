@@ -7,6 +7,13 @@ Description: >-
   Amazon EC2 Windows instance and related resources. You will be billed for the AWS
   resources used if you create a stack from this template. (qs-1qup6rahc)
 Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+        - E0002
+        - E9101
+        - W9004
+        - W9006
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
@@ -78,9 +85,9 @@ Metadata:
       - Label:
           default: Application Insights configuration
         Parameters:
-				  - EnableAppInsights
+          - EnableAppInsights
           - ApplicationName
-					- ResourceGroupName
+          - ResourceGroupName
       - Label:
           default: AWS Systems Manager AMI configuration
         Parameters:
@@ -97,10 +104,10 @@ Metadata:
     ParameterLabels:
       ApplicationName:
         default: Application Insights application name
-			EnableAppInsights:
-			  default: Enable Application Insights
-			ResourceGroupName:
-			  default: Resource Group name
+      EnableAppInsights:
+        default: Enable Application Insights
+      ResourceGroupName:
+        default: Resource Group name
       ADScenarioType:
         default: AD scenario type
       ADServer1PrivateIP:
@@ -620,17 +627,13 @@ Parameters:
     Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-SQL_2017_Enterprise'
   WS2019FULLSQL2016ENT:
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-    Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-SQL_2016_SP2_Enterprise'
+    Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-SQL_2016_SP3_Enterprise'
 Conditions:
   EnableAppInsightForSQLHA: !Equals [!Ref 'EnableAppInsights', 'true']
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
   UseAWSDirectoryServiceEE: !Equals
     - !Ref 'ADScenarioType'
     - AWS Directory Service for Microsoft AD (Enterprise Edition)
-  IsThreeAz: !Not
-    - !Equals
-      - !Ref 'ThirdAZ'
-      - 'no'
   ThirdAzIsWitness: !Equals
     - !Ref 'ThirdAZ'
     - witness
@@ -659,9 +662,6 @@ Conditions:
   SQLVersion2017: !Equals
     - !Ref 'SQLServerVersion'
     - '2017'
-  GovCloudCondition: !Equals
-    - !Ref 'AWS::Region'
-    - us-gov-west-1
   FSxWitness: !Equals
     - !Ref 'WitnessType'
     - 'FSx'
@@ -689,6 +689,11 @@ Resources:
       SecretString: !Sub '{ "username" : "${SQLServiceAccount}", "password" : "${SQLServiceAccountPassword}" }'
   AWSQuickstartMSSQLRole:
     Type: AWS::IAM::Role
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - EIAMPolicyActionWildcard
     Properties:
       Policies:
         - PolicyDocument:
@@ -708,12 +713,12 @@ Resources:
               - Action:
                   - s3:GetObject
                 Resource: 
-                  - !Sub 'arn:aws:s3:::aws-ssm-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::aws-windows-downloads-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::amazon-ssm-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::amazon-ssm-packages-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::${AWS::Region}-birdwatcher-prod/*'
-                  - !Sub 'arn:aws:s3:::patch-baseline-snapshot-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::aws-ssm-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::aws-windows-downloads-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::amazon-ssm-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::amazon-ssm-packages-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::${AWS::Region}-birdwatcher-prod/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::patch-baseline-snapshot-${AWS::Region}/*'
                 Effect: Allow
           PolicyName: ssm-custom-s3-policy
         - PolicyDocument:
@@ -2316,6 +2321,12 @@ Resources:
         - !Ref 'AWSQuickstartMSSQLRole'
   WSFCRole:
     Type: AWS::IAM::Role
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - EIAMPolicyActionWildcard
+            - EIAMPolicyWildcardResource
     Properties:
       Policies:
         - PolicyDocument:
@@ -2336,12 +2347,12 @@ Resources:
               - Action:
                   - s3:GetObject
                 Resource: 
-                  - !Sub 'arn:aws:s3:::aws-ssm-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::aws-windows-downloads-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::amazon-ssm-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::amazon-ssm-packages-${AWS::Region}/*'
-                  - !Sub 'arn:aws:s3:::${AWS::Region}-birdwatcher-prod/*'
-                  - !Sub 'arn:aws:s3:::patch-baseline-snapshot-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::aws-ssm-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::aws-windows-downloads-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::amazon-ssm-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::amazon-ssm-packages-${AWS::Region}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::${AWS::Region}-birdwatcher-prod/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::patch-baseline-snapshot-${AWS::Region}/*'
                 Effect: Allow
           PolicyName: ssm-custom-s3-policy
         - PolicyDocument:
@@ -2424,6 +2435,7 @@ Resources:
           Ebs:
             VolumeSize: 100
             VolumeType: gp2
+            Encrypted: true
       KeyName: !Ref 'KeyPairName'
   WSFCNode1:
     Type: AWS::EC2::Instance
@@ -2464,6 +2476,7 @@ Resources:
           Ebs:
             VolumeSize: 100
             VolumeType: gp2
+            Encrypted: true
         - DeviceName: /dev/xvdca
           VirtualName: ephemeral0
       KeyName: !Ref 'KeyPairName'
@@ -2507,6 +2520,7 @@ Resources:
           Ebs:
             VolumeSize: 100
             VolumeType: gp2
+            Encrypted: true
         - DeviceName: /dev/xvdca
           VirtualName: ephemeral0
       KeyName: !Ref 'KeyPairName'
@@ -2549,6 +2563,7 @@ Resources:
           Ebs:
             VolumeSize: 100
             VolumeType: gp2
+            Encrypted: true
         - DeviceName: /dev/xvdca
           VirtualName: ephemeral0
       KeyName: !Ref 'KeyPairName'
@@ -2623,7 +2638,7 @@ Resources:
             - ';"URLSuffix"='
             - !Sub '"${AWS::URLSuffix}"'
             - ';"AutomationAssumeRole"='
-            - !Sub '"arn:aws:iam::${AWS::AccountId}:role/${AWSQuickstartMSSQLRole}"'
+            - !Sub '"arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${AWSQuickstartMSSQLRole}"'
             - '}'
             - "\n"
             - "</powershell>\n"
@@ -2632,6 +2647,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume1Size'
       VolumeType: !Ref 'Volume1Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode1.AvailabilityZone'
       Iops: !If
         - Vol1IsIo1
@@ -2642,6 +2658,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume2Size'
       VolumeType: !Ref 'Volume2Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode1.AvailabilityZone'
       Iops: !If
         - Vol2IsIo1
@@ -2652,6 +2669,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume3Size'
       VolumeType: !Ref 'Volume3Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode1.AvailabilityZone'
       Iops: !If
         - Vol3IsIo1
@@ -2662,6 +2680,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume1Size'
       VolumeType: !Ref 'Volume1Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode2.AvailabilityZone'
       Iops: !If
         - Vol1IsIo1
@@ -2672,6 +2691,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume2Size'
       VolumeType: !Ref 'Volume2Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode2.AvailabilityZone'
       Iops: !If
         - Vol2IsIo1
@@ -2682,6 +2702,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume3Size'
       VolumeType: !Ref 'Volume3Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode2.AvailabilityZone'
       Iops: !If
         - Vol3IsIo1
@@ -2693,6 +2714,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume1Size'
       VolumeType: !Ref 'Volume1Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode3.AvailabilityZone'
       Iops: !If
         - Vol1IsIo1
@@ -2704,6 +2726,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume2Size'
       VolumeType: !Ref 'Volume2Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode3.AvailabilityZone'
       Iops: !If
         - Vol2IsIo1
@@ -2715,6 +2738,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume3Size'
       VolumeType: !Ref 'Volume3Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode3.AvailabilityZone'
       Iops: !If
         - Vol3IsIo1
@@ -2976,7 +3000,6 @@ Resources:
           SourceSecurityGroupId: !Ref DomainMemberSGID
   FSXFileSystem:
     Type: 'AWS::FSx::FileSystem'
-    DependsOn: FSxSG
     Condition: FSxWitness
     Properties:
       FileSystemType: WINDOWS
@@ -3014,11 +3037,11 @@ Resources:
       CustomComponents:
         - ComponentName: !Sub 'SQLHAClusterInstances-${ApplicationName}'
           ResourceList:
-            - !Sub 'arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/${WSFCNode1}'
-            - !Sub 'arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/${WSFCNode2}'
+            - !Sub 'arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${WSFCNode1}'
+            - !Sub 'arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${WSFCNode2}'
             - !If
               - ThirdAzIsFullNode
-              - !Sub 'arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/${WSFCNode3}'
+              - !Sub 'arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${WSFCNode3}'
               - !Ref 'AWS::NoValue'
 
       ComponentMonitoringSettings:

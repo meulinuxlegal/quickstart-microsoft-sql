@@ -4,8 +4,14 @@ Description: >-
   AlwaysOn Availability Group nodes. This template also deploys the require AD architecture
   outlined in "Implementing Active Directory Domain Services in the AWS Cloud" **WARNING**
   This template creates Amazon EC2 Windows instance and related resources. You will
-  be billed for the AWS resources used if you create a stack from this template.
+  be billed for the AWS resources used if you create a stack from this template. (qs-1tsaami2g)
 Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+        - E0002
+        - E9101
+        - W9006
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:

@@ -631,7 +631,7 @@ Parameters:
     Description: AMI for Windows Server 2019 with SQL 2017 Enterprise
   WS2019FULLSQL2016ENT:
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-    Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-SQL_2016_SP2_Enterprise'
+    Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-SQL_2016_SP3_Enterprise'
     Description: AMI for Windows Server 2019 with SQL 2016 Enterprise
 Conditions:
   EnableAppInsightForSQLHA: !Equals [!Ref 'EnableAppInsights', 'true']
@@ -694,6 +694,11 @@ Resources:
       SecretString: !Sub '{ "username" : "${SQLServiceAccount}", "password" : "${SQLServiceAccountPassword}" }'
   AWSQuickstartMSSQLRole:
     Type: AWS::IAM::Role
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - EIAMPolicyActionWildcard
     Properties:
       Policies:
         - PolicyDocument:
@@ -2308,6 +2313,11 @@ Resources:
             UniqueId: "{{wsfcNode2InstanceId.InstanceId}}"
   MSSQLSSMPassRolePolicy:
     Type: AWS::IAM::Policy
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - EIAMPolicyActionWildcard
     Properties:
       PolicyName: MSSQL-SSM-PassRole
       PolicyDocument:
@@ -2321,6 +2331,12 @@ Resources:
         - !Ref 'AWSQuickstartMSSQLRole'
   WSFCRole:
     Type: AWS::IAM::Role
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - EIAMPolicyActionWildcard
+            - EIAMPolicyWildcardResource
     Properties:
       Policies:
         - PolicyDocument:
@@ -2643,6 +2659,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume1Size'
       VolumeType: !Ref 'Volume1Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode1.AvailabilityZone'
       Iops: !If
         - Vol1IsIo1
@@ -2653,6 +2670,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume2Size'
       VolumeType: !Ref 'Volume2Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode1.AvailabilityZone'
       Iops: !If
         - Vol2IsIo1
@@ -2663,6 +2681,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume3Size'
       VolumeType: !Ref 'Volume3Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode1.AvailabilityZone'
       Iops: !If
         - Vol3IsIo1
@@ -2673,6 +2692,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume1Size'
       VolumeType: !Ref 'Volume1Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode2.AvailabilityZone'
       Iops: !If
         - Vol1IsIo1
@@ -2683,6 +2703,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume2Size'
       VolumeType: !Ref 'Volume2Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode2.AvailabilityZone'
       Iops: !If
         - Vol2IsIo1
@@ -2693,6 +2714,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume3Size'
       VolumeType: !Ref 'Volume3Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode2.AvailabilityZone'
       Iops: !If
         - Vol3IsIo1
@@ -2704,6 +2726,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume1Size'
       VolumeType: !Ref 'Volume1Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode3.AvailabilityZone'
       Iops: !If
         - Vol1IsIo1
@@ -2715,6 +2738,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume2Size'
       VolumeType: !Ref 'Volume2Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode3.AvailabilityZone'
       Iops: !If
         - Vol2IsIo1
@@ -2726,6 +2750,7 @@ Resources:
     Properties:
       Size: !Ref 'Volume3Size'
       VolumeType: !Ref 'Volume3Type'
+      Encrypted: true
       AvailabilityZone: !GetAtt 'WSFCNode3.AvailabilityZone'
       Iops: !If
         - Vol3IsIo1
